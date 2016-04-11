@@ -31,6 +31,14 @@ enum {
 #define P9220_VOUT_8V_VAL					0x2d
 #define P9220_VOUT_9V_VAL					0x37
 
+static unsigned int STORE_MODE_CHARGING_MAX = 100;
+static unsigned int STORE_MODE_CHARGING_MIN = 95;
+
+module_param_named(store_mode_max, STORE_MODE_CHARGING_MAX, uint, S_IWUSR | S_IRUGO);
+module_param_named(store_mode_min, STORE_MODE_CHARGING_MIN, uint, S_IWUSR | S_IRUGO);
+
+const char *charger_chip_name;
+
 bool sleep_mode = false;
 
 static struct device_attribute sec_battery_attrs[] = {
