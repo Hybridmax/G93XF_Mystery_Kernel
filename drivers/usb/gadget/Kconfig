@@ -439,6 +439,14 @@ config USB_ANDROID_SAMSUNG_MTP
 	  If you enable this option,
 	  google mtp will be changed to samsung mtp.
 
+config USB_ANDROID_HID_GADGET
+	boolean "HID Gadget"
+	depends on USB_G_ANDROID
+	help
+	  The HID Gadget acts as both a USB Keyboard and USB Mouse
+	  device. It allows the android device to send key strokes
+	  or mouse movement commands to the connected host.
+
 config USB_LOCK_SUPPORT_FOR_MDM
 	boolean "Samsung USB_LOCK function for MDM"
 	depends on USB_G_ANDROID

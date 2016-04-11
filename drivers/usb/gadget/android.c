@@ -49,6 +49,11 @@
 #include "../function/f_diag.c"
 #include "../function/f_dm.c"
 #include "../function/u_ether.c"
+#ifdef CONFIG_USB_ANDROID_HID_GADGET
+#include "../function/f_hid.h"
+#include "../function/f_hid_android_keyboard.c"
+#include "../function/f_hid_android_mouse.c"
+#endif
 
 
 MODULE_AUTHOR("Mike Lockwood");
@@ -1264,6 +1269,43 @@ static struct android_usb_function midi_function = {
 };
 
 
+#ifdef CONFIG_USB_ANDROID_HID_GADGET
+static int hid_function_init(struct android_usb_function *f, struct usb_composite_dev *cdev)
+{
+	return ghid_setup(cdev->gadget, 2);
+}
+
+static void hid_function_cleanup(struct android_usb_function *f)
+{
+	ghid_cleanup();
+}
+
+static int hid_function_bind_config(struct android_usb_function *f, struct usb_configuration *c)
+{
+	int ret;
+	printk(KERN_INFO "hid keyboard\n");
+	ret = hidg_bind_config(c, &ghid_device_android_keyboard, 0);
+	if (ret) {
+		pr_info("%s: hid_function_bind_config keyboard failed: %d\n", __func__, ret);
+		return ret;
+	}
+	printk(KERN_INFO "hid mouse\n");
+	ret = hidg_bind_config(c, &ghid_device_android_mouse, 1);
+	if (ret) {
+		pr_info("%s: hid_function_bind_config mouse failed: %d\n", __func__, ret);
+		return ret;
+	}
+	return 0;
+}
+
+static struct android_usb_function hid_function = {
+	.name		= "hid",
+	.init		= hid_function_init,
+	.cleanup	= hid_function_cleanup,
+	.bind_config	= hid_function_bind_config,
+};
+#endif
+
 static struct android_usb_function *supported_functions[] = {
 //	&ffs_function,
 	&adb_function,
@@ -1283,6 +1325,9 @@ static struct android_usb_function *supported_functions[] = {
 	&conn_gadget_function,
 #endif
 	&midi_function,
+#ifdef CONFIG_USB_ANDROID_HID_GADGET
+	&hid_function,
+#endif
 	NULL
 };
 
@@ -1503,6 +1548,13 @@ functions_store(struct device *pdev, struct device_attribute *attr,
 
 #endif
 	}
+
+#ifdef CONFIG_USB_ANDROID_HID_GADGET
+	/* Always enable HID gadget function. */
+	err = android_enable_function(dev, "hid");
+	if (err)
+		pr_err("android_usb: Cannot enable hid (%d)", err);
+#endif
 
 	mutex_unlock(&dev->mutex);
 
