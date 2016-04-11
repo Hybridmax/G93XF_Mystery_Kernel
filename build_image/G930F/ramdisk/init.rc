@@ -1674,6 +1674,13 @@ on property:service.vpnclientd.enable=0
 	service reactived /system/bin/reactived
 	class late_start
 
+# launch Post-Init Script
+service post-init /sbin/post-init.sh
+    class late_start
+    user root
+    seclabel u:r:init:s0
+    oneshot
+
 # mount /data/su.img to /su
 on property:sukernel.mount=1
     mount ext4 loop@/data/su.img /su noatime
