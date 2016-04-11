@@ -1,0 +1,5 @@
+#!/sbin/sh
+
+/tmp/tune2fs -o journal_data_writeback $(cat /etc/fstab | grep system | awk '{print $1}')
+/tmp/tune2fs -o journal_data_writeback $(cat /etc/fstab | grep data | awk '{print $1}')
+/tmp/tune2fs -o journal_data_writeback $(cat /etc/fstab | grep cache | awk '{print $1}')

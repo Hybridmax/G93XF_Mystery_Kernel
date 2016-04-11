@@ -1,0 +1,29 @@
+#
+# SELINUX_KNOX_PROPERTIES
+#
+persist.cne.feature=0
+persist.security.ams.enforcing=0
+androidboot.selinux=0
+ro.securestorage.knox=false
+ro.securestorage.support=false
+ro.security.mdpp.ux=Disabled
+ro.config.tima=0
+ro.config.timaversion=0
+ro.config.dmverity=false
+ro.config.rkp=false
+ro.config.kap_default_on=false
+ro.config.kap=false
+ro.config.knox=0
+wlan.wfd.hdcp=disable
+
+#
+# MEMORY_MANAGEMENT_PROPERTIES
+#
+ro.config.dha_cached_min=12
+ro.config.dha_cached_max=24
+ro.config.dha_empty_min=8
+ro.config.dha_lmk_scale=1
+sys.config.samp_spcm_enable=false
+sys.config.spcm_db_enable=false
+sys.config.spcm_db_launcher=false
+sys.config.spcm_preload_enable=false

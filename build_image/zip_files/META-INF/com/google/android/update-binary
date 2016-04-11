@@ -1,0 +1,140 @@
+#!/sbin/sh
+#
+# Mystery - Kernel installer ZIP
+# Copyright (c) 2013-2016 - Hybridmax
+
+OUTFD=$2
+ZIP=$3
+SYSTEM=/tmp/hybridmax/system
+PROP=/tmp/hybridmax/mystery.prop
+SYSTEMPROP=/tmp/hybridmax/kernel.prop
+PROFILE=/tmp/hybridmax/kernel-profile.prop
+
+ui_print() {
+  echo -n -e "ui_print $1\n" > /proc/self/fd/$OUTFD
+  echo -n -e "ui_print\n" > /proc/self/fd/$OUTFD
+}
+
+ch_con() {
+  LD_LIBRARY_PATH=$SYSTEMLIB /system/bin/toybox chcon -h u:object_r:system_file:s0 $1 1>/dev/null 2>/dev/null
+  LD_LIBRARY_PATH=$SYSTEMLIB /system/toolbox chcon -h u:object_r:system_file:s0 $1 1>/dev/null 2>/dev/null
+  LD_LIBRARY_PATH=$SYSTEMLIB /system/bin/toolbox chcon -h u:object_r:system_file:s0 $1 1>/dev/null 2>/dev/null
+  chcon -h u:object_r:system_file:s0 $1 1>/dev/null 2>/dev/null
+  LD_LIBRARY_PATH=$SYSTEMLIB /system/bin/toybox chcon u:object_r:system_file:s0 $1 1>/dev/null 2>/dev/null
+  LD_LIBRARY_PATH=$SYSTEMLIB /system/toolbox chcon u:object_r:system_file:s0 $1 1>/dev/null 2>/dev/null
+  LD_LIBRARY_PATH=$SYSTEMLIB /system/bin/toolbox chcon u:object_r:system_file:s0 $1 1>/dev/null 2>/dev/null
+  chcon u:object_r:system_file:s0 $1 1>/dev/null 2>/dev/null
+}
+
+ch_con_ext() {
+  LD_LIBRARY_PATH=$SYSTEMLIB /system/bin/toybox chcon $2 $1 1>/dev/null 2>/dev/null
+  LD_LIBRARY_PATH=$SYSTEMLIB /system/toolbox chcon $2 $1 1>/dev/null 2>/dev/null
+  LD_LIBRARY_PATH=$SYSTEMLIB /system/bin/toolbox chcon $2 $1 1>/dev/null 2>/dev/null
+  chcon $2 $1 1>/dev/null 2>/dev/null
+}
+
+set_perm() {
+  chown $1.$2 $4
+  chown $1:$2 $4
+  chmod $3 $4
+  ch_con $4
+  ch_con_ext $4 $5
+}
+
+cp_perm() {
+  rm $5
+  if [ -f "$4" ]; then
+    cat $4 > $5
+    set_perm $1 $2 $3 $5 $6
+  fi
+}
+
+cd /tmp
+rm -rf hybridmax
+mkdir hybridmax
+cd hybridmax
+unzip -o "$ZIP"
+
+ui_print " "
+ui_print "**************************"
+ui_print "Mystery - Kernel Installer"
+ui_print "**************************"
+ui_print " "
+
+ui_print " - Mounting /system, /data and rootfs"
+ui_print " "
+mount /system
+mount /data
+mount -o rw,remount /
+mount -o rw,remount / /
+
+ui_print " - Flashing boot.img"
+ui_print " "
+cat boot.img > /dev/block/platform/15570000.ufs/by-name/BOOT
+
+ui_print " - Removing KNOX"
+ui_print " "
+cd /system
+
+rm -rf *app/BBCAgent*
+rm -rf *app/Bridge*
+rm -rf *app/ContainerAgent*
+rm -rf *app/ContainerEventsRelayManager*
+rm -rf *app/DiagMonAgent*
+rm -rf *app/ELMAgent*
+rm -rf *app/FotaClient*
+rm -rf *app/FWUpdate*
+rm -rf *app/FWUpgrade*
+rm -rf *app/HLC*
+rm -rf *app/KLMSAgent*
+mv app/KnoxSwitcher .
+rm -rf *app/*Knox*
+mv KnoxSwitcher app/
+rm -rf *app/*KNOX*
+rm -rf *app/LocalFOTA*
+rm -rf *app/RCPComponents*
+rm -rf *app/SecKids*
+rm -rf *app/SecurityLogAgent*
+rm -rf *app/SPDClient*
+rm -rf *app/SyncmlDM*
+rm -rf *app/UniversalMDMClient*
+rm -rf container/*Knox*
+rm -rf container/*KNOX*
+
+ui_print " - Placing System Files"
+ui_print " "
+cp_perm 0 0 0755 $SYSTEM/xbin/busybox /system/xbin/busybox
+cp_perm 0 0 0755 $SYSTEM/xbin/ext4 /system/xbin/ext4
+cp_perm 0 0 0755 $SYSTEM/xbin/fstrim /system/xbin/fstrim
+cp_perm 0 0 0755 $SYSTEM/xbin/tune2fs /system/xbin/tune2fs
+cp_perm 0 0 0755 $SYSTEM/xbin/zip /system/xbin/zip
+cp_perm 0 0 0755 $SYSTEM/etc/init.d/0hybridmax /system/etc/init.d/0hybridmax
+rm -rf /system/lib/modules/*.ko
+cp_perm 0 0 0755 $SYSTEM/lib/modules/*.ko /system/lib/modules/*.ko
+cp_perm 0 0 0755 $SYSTEMPROP /system/kernel.prop
+mkdir -p /data/media/0/mystery-kernel
+cp_perm 0 0 0755 $SYSTEMPROP /data/media/0/mystery-kernel/kernel.prop
+cp_perm 0 0 0755 $PROFILE /data/media/0/mystery-kernel/kernel-profile.prop
+
+cp_perm 0 0 0644 $PROP /system/vendor/build.prop
+
+set_perm 0 0 0755 /system/etc/init.d/*
+
+cd /
+
+ui_print " - Tuning file systems"
+ui_print " "
+fstrim -v /system > /dev/null 2>&1
+fstrim -v /data   > /dev/null 2>&1
+fstrim -v /cache  > /dev/null 2>&1
+
+ui_print " - Unmounting /system, /data and rootfs"
+ui_print " "
+umount /data > /dev/null 2>&1
+umount /system > /dev/null 2>&1
+
+ui_print ""
+ui_print "Done!"
+ui_print " "
+rm -rf /tmp/hybridmax
+sync
