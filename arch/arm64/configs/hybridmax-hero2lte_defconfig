@@ -1,6 +1,8 @@
 #
 # Hybridmax/arm64 Kernel Configuration
 #
+CONFIG_FRANDOM=y
+
 CONFIG_ARM64=y
 CONFIG_64BIT=y
 CONFIG_ARCH_PHYS_ADDR_T_64BIT=y
