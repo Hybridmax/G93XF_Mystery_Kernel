@@ -53,7 +53,12 @@
 
 #define NFS_UINT_MAXLEN 11
 
+#ifdef CONFIG_RKP_KDP
+static struct cred *id_resolver_cache;
+#else
 static const struct cred *id_resolver_cache;
+#endif
+
 static struct key_type key_type_id_resolver_legacy;
 
 struct idmap_legacy_upcalldata {

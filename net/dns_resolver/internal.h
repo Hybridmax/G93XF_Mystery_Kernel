@@ -25,7 +25,11 @@
 /*
  * dns_key.c
  */
+#ifdef CONFIG_RKP_KDP
+extern struct cred *dns_resolver_cache;
+#else
 extern const struct cred *dns_resolver_cache;
+#endif
 
 /*
  * debug tracing
