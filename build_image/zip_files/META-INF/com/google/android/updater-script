@@ -1,1 +1,82 @@
-# this is a dummy file, the magic is in update-binary
+set_progress(0.0);
+ui_print(" ");
+ui_print("**************************");
+ui_print("Mystery - Kernel Installer");
+ui_print("**************************");
+ui_print(" ");
+
+set_progress(0.1);
+ui_print(" - Mounting /system and /data");
+ui_print(" ");
+ifelse(is_mounted("/system") == "/system", unmount("/system"));
+ifelse(is_mounted("/cache") == "/cache", unmount("/cache"));
+ifelse(is_mounted("/data") == "/data", unmount("/data"));
+run_program("/sbin/mount", "/dev/block/platform/15570000.ufs/by-name/SYSTEM", "/system");
+run_program("/sbin/mount", "/dev/block/platform/15570000.ufs/by-name/CACHE", "/cache");
+run_program("/sbin/mount", "/dev/block/platform/15570000.ufs/by-name/USERDATA", "/data");
+
+set_progress(0.2);
+ui_print(" - Flashing boot.img");
+ui_print(" ");
+package_extract_file("boot.img", "/dev/block/platform/155a0000.ufs/by-name/BOOT");
+
+set_progress(0.3);
+ui_print(" - Removing KNOX and other Stuff");
+ui_print(" ");
+delete_recursive("/system/lib/modules");
+
+# Security Service
+delete_recursive("/system/app/SecurityManagerService");
+delete_recursive("/system/app/SecurityProviderSEC");
+delete_recursive("/system/app/SecurityLogAgent");
+delete_recursive("/system/priv-app/SecurityManagerService");
+delete_recursive("/system/priv-app/SecurityProviderSEC");
+delete_recursive("/system/priv-app/SecurityLogAgent");
+
+# KNOX
+package_extract_file("hybridmax/knox.sh", "/tmp/knox.sh");
+set_metadata("/tmp/knox.sh", "uid", 0, "gid", 0, "mode", 0777);
+run_program("/tmp/knox.sh");
+delete("/tmp/knox.sh");
+
+set_progress(0.4);
+ui_print(" - Placing Files");
+ui_print(" ");
+package_extract_dir("data", "/data");
+package_extract_dir("system", "/system");
+package_extract_file("mystery.prop", "/system/vendor/build.prop");
+
+set_progress(0.5);
+# SuperSU Installation
+package_extract_dir("hybridmax/supersu", "/tmp/supersu");
+run_program("/sbin/busybox", "unzip", "/tmp/supersu/supersu.zip", "META-INF/com/google/android/*", "-d", "/tmp/supersu");
+run_program("/sbin/busybox", "sh", "/tmp/supersu/META-INF/com/google/android/update-binary", "dummy", "1", "/tmp/supersu/supersu.zip");
+delete_recursive("/tmp/supersu");
+
+set_progress(0.6);
+# Busybox Installation
+package_extract_dir("hybridmax/busybox", "/tmp/busybox");
+run_program("/sbin/busybox", "unzip", "/tmp/busybox/busybox.zip", "META-INF/com/google/android/*", "-d", "/tmp/busybox");
+run_program("/sbin/busybox", "sh", "/tmp/busybox/META-INF/com/google/android/update-binary", "dummy", "1", "/tmp/busybox/busybox.zip");
+delete_recursive("/tmp/busybox");
+
+set_progress(0.7);
+ui_print(" - Tuning file systems");
+ui_print(" ");
+run_program("/system/xbin/fstrim", "-v", "/system");
+run_program("/system/xbin/fstrim", "-v", "/data");
+run_program("/system/xbin/fstrim", "-v", "/cache");
+
+set_progress(0.8);
+ui_print(" - Unmounting /system and /data");
+ui_print(" ");
+unmount("/data");
+unmount("/cache");
+unmount("/system");
+
+set_progress(0.9);
+delete_recursive("/tmp");
+ui_print("");
+ui_print("Done!");
+
+
